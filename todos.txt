@@ -1,0 +1,4 @@
+6/23/2013:
+(1) Fix a bug for dragging and dropping a piece at the same square.
+(2) TODO: add rules for highlighting candidate squares, including moving and
+capturing piece.

@@ -1,0 +1,7 @@
+6/23/2013:
+There is a bug in the code that if a piece is dragged and dropped at the same
+square, it would disappear from the board.
+
+Fix: remove this line:
+$(this).find('.draggablePiece').css({display : 'none'});
+

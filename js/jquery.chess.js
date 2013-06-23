@@ -12,9 +12,10 @@
          * @param position
          * @private
          */
-        function _arrangeMatrixPosition(position) {
-            if (!position) {
+        function arrangeMatrixPosition(type, position) {
+            var thisPosition;
 
+            if (!position) {
                 // Start initial position if position is null
                 position = [
                     ['br','bn','bb','bq','bk','bb','bn','br'],
@@ -26,17 +27,30 @@
                     ['wp','wp','wp','wp','wp','wp','wp','wp'],
                     ['wr','wn','wb','wq','wk','wb','wn','wr']
                 ];
-
             }
-            position.reverse();
 
-            for (y in position) {
-                for (x in position[y]) {
-                    if (position[y][x] !== 0) {
+            if (typeof type === 'string') {
+                switch (type) {
+                    case 'matrix':
+                        thisPosition = position;
+                        break;
+                    case 'fen':
+                        thisPosition = fenToPosition(position);
+                        break;
+                    default:
+                        alert(1);
+                }
+            }
+
+            thisPosition.reverse();
+
+            for (y in thisPosition) {
+                for (x in thisPosition[y]) {
+                    if (thisPosition[y][x] !== 0) {
                         $boardInner.find(
                                 '#pos' + Number(parseInt(x) + 1) +
                                     Number(parseInt(y) + 1)).
-                            append($pieces[position[y][x]].clone());
+                            append($pieces[thisPosition[y][x]].clone());
                     }
                 }
             }
@@ -49,7 +63,7 @@
          * @returns {Array}
          * @private
          */
-        function _fenToPosition(fen) {
+        function fenToPosition(fen) {
             var i;
             var j;
             var row;
@@ -75,7 +89,75 @@
                 }
                 position.push(positionRow);
             }
+            console.log(position);
             return position;
+        }
+
+        function initializePosition() {
+            // Initial black pieces position.
+            $boardInner.find(
+                    '#pos17,#pos27,#pos37,#pos47,#pos57,#pos67,#pos77,#pos87').
+                append($pieces.bp);
+            $boardInner.find('#pos18,#pos88').append($pieces.br);
+            $boardInner.find('#pos28,#pos78').append($pieces.bn);
+            $boardInner.find('#pos38,#pos68').append($pieces.bb);
+            $boardInner.find('#pos58').append($pieces.bk);
+            $boardInner.find('#pos48').append($pieces.bq);
+
+            // Initial white pieces position.
+            $boardInner.find(
+                    '#pos12,#pos22,#pos32,#pos42,#pos52,#pos62,#pos72,#pos82').
+                append($pieces.wp);
+            $boardInner.find('#pos11,#pos81').append($pieces.wr);
+            $boardInner.find('#pos21,#pos71').append($pieces.wn);
+            $boardInner.find('#pos31,#pos61').append($pieces.wb);
+            $boardInner.find('#pos51').append($pieces.wk);
+            $boardInner.find('#pos41').append($pieces.wq);
+        }
+
+        function getPieceType($piece) {
+            var pieceType;
+
+            if ($piece.hasClass('wp') || $piece.hasClass('bp')) {
+                pieceType = 'p';
+            }
+            else if ($piece.hasClass('wr')) {
+
+            }
+            return pieceType;
+        }
+
+        /**
+         * Highlight candidate squares for each type of pieces
+         * @param $piece
+         */
+        function highlightCandidateSquares($piece) {
+            var i;
+            var currentPos;
+            var currentX;
+            var currentY;
+            var pieceType = getPieceType($piece);
+
+            // Get the current coords.
+            currentPos = $piece.parents('.square').attr('id').split('pos')[1];
+            // console.log(currentPos);
+            // Mark the valid move fields.
+            currentX = parseInt(currentPos.substring(0, 1));
+            currentY = parseInt(currentPos.substring(1, 2));
+            //console.log(currentX); console.log(currentY);
+
+            switch(pieceType){
+                case 'p':
+                    // Mark all fields =< (y+2) only when the pawn is at
+                    // initial position, othwise mark one square for move,
+                    // or mark possible square(s) for capturing if it is
+                    // a legal move.
+                    i = 0;
+                    for(i = currentY; i <= (currentY + 2); i++){
+                        $('#pos' + currentX + i).addClass('highlight');
+                    }
+                    break;
+            }
         }
 
         this.init = function(options, elem) {
@@ -162,6 +244,7 @@
                    // The following line add notation to the squares.
                    // This is not real chess board styles.
                    //tmpSquare.append(tmpSquareNotation);
+
                    $boardInner.append(tmpSquare);
                 }
             }
@@ -177,41 +260,10 @@
          */
         this.buildPosition = function(start, type, position) {
             if (start) {
-
-               // Initial black pieces position.
-                $boardInner.find(
-                    '#pos17,#pos27,#pos37,#pos47,#pos57,#pos67,#pos77,#pos87').
-                    append($pieces.bp);
-                $boardInner.find('#pos18,#pos88').append($pieces.br);
-                $boardInner.find('#pos28,#pos78').append($pieces.bn);
-                $boardInner.find('#pos38,#pos68').append($pieces.bb);
-                $boardInner.find('#pos58').append($pieces.bk);
-                $boardInner.find('#pos48').append($pieces.bq);
-
-                // Initial white pieces position.
-                $boardInner.find(
-                    '#pos12,#pos22,#pos32,#pos42,#pos52,#pos62,#pos72,#pos82').
-                    append($pieces.wp);
-                $boardInner.find('#pos11,#pos81').append($pieces.wr);
-                $boardInner.find('#pos21,#pos71').append($pieces.wn);
-                $boardInner.find('#pos31,#pos61').append($pieces.wb);
-                $boardInner.find('#pos51').append($pieces.wk);
-                $boardInner.find('#pos41').append($pieces.wq);
-
+                initializePosition();
             }
 
-            if (typeof type === 'string') {
-                switch (type) {
-                    case 'matrix':
-                        _arrangeMatrixPosition(position);
-                        break;
-                    case 'fen':
-                        this._arrangeMatrixPosition(_fenToPosition(position));
-                        break;
-                    default:
-                        alert(1);
-                }
-            }
+            arrangeMatrixPosition(type, position);
 
             // Make pieces draggable.
             $boardInner.find('.draggablePiece').draggable({
@@ -220,7 +272,7 @@
                 stack:  $boardInner.find('.draggablePiece'),
                 start:  function (event, ui){
                             $(this).css({position : 'absolute'});
-                            self.rules($(this));
+                            highlightCandidateSquares($(this));
                         }
             });
 
@@ -230,7 +282,6 @@
                 tolerance:  'intersect',
                 drop:       function(event, ui) {
                     //$( this ).addClass( "ui-state-highlight" );
-                    $(this).find('.draggablePiece').css({display : 'none'});
                     $(this).append(ui.draggable.css('position', 'static'));
                     //console.log('drop');
                 }
@@ -244,42 +295,6 @@
             // @TODO: Append to element.
             $board.append($boardInner);
             $board.appendTo($settings.appendTo);
-        }
-
-        /**
-         * Rules for each type of pieces
-         * @param $piece
-         */
-        this.rules = function($piece) {
-            var i;
-            var currentPos;
-            var currentX;
-            var currentY;
-
-            if ($piece.hasClass('wp')) {
-                var pieceType = 'p';
-            }
-
-            // Pawn can only move on the y axis.
-            switch(pieceType){
-                case 'p':
-                    // Get the current coords.
-                    currentPos = $piece.parents('.square').attr('id').
-                        split('pos')[1];
-                    //console.log(currentPos);
-                    // Mark the valid move fields.
-                    currentX = parseInt(currentPos.substring(0, 1));
-                    currentY = parseInt(currentPos.substring(1, 2));
-                    //console.log(currentX); console.log(currentY);
-
-                    // Mark all fields =< (y+2)
-                    i = 0;
-                    for(i = currentY; i <= (currentY + 2); i++){
-                        $('#pos' + currentX + i).addClass('highlight');
-                    }
-
-                break;
-            }
         }
     }
 
