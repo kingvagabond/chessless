@@ -15,7 +15,6 @@ local.properties
 .classpath
 .settings/
 .loadpath
-.idea
 
 # External tool builders
 .externalToolBuilders/
@@ -214,3 +213,8 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+
+#############
+## Webstorm
+#############
+.idea/
