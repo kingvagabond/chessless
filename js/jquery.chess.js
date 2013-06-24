@@ -93,6 +93,9 @@
             return position;
         }
 
+        /**
+         * Function to set board to initial position of a game
+         */
         function initializePosition() {
             // Initial black pieces position.
             $boardInner.find(
@@ -115,14 +118,19 @@
             $boardInner.find('#pos41').append($pieces.wq);
         }
 
+        /**
+         * Get piece type
+         * @param $piece
+         * @returns {*} piece type string
+         */
         function getPieceType($piece) {
             var pieceType;
 
             if ($piece.hasClass('wp') || $piece.hasClass('bp')) {
                 pieceType = 'p';
             }
-            else if ($piece.hasClass('wr')) {
-
+            else if ($piece.hasClass('wr') || $piece.hasClass('br')) {
+                pieceType = 'r';
             }
             return pieceType;
         }
@@ -158,6 +166,99 @@
                     }
                     break;
             }
+        }
+
+        /**
+         * Function to build the board
+         */
+        this.buildBoard = function() {
+            var tmpSquare;
+            var tmpSquareNotation;
+
+            // @TODO - Reverse pieces here.
+            $settings.newY = $settings.y.slice();
+            $settings.newY.reverse();
+
+            for (x in $settings.x) {
+                for (y in $settings.newY) {
+                    tmpSquare = $('<div></div>').
+                        attr({id: 'pos' + $settings.x[x] +
+                            '' + $settings.y[y]}).
+                        css({
+                            left: (($settings.x[x] - 1) *
+                                $settings.squareSize),
+                            top:         (($settings.newY[y] - 1) *
+                                $settings.squareSize),
+                            position:    'absolute',
+                            width:       $settings.squareSize,
+                            height:      $settings.squareSize
+                        })
+                        .addClass('square ' + (x % 2 ? 'evenX' : 'oddX') +
+                            ' ' + (y % 2 ? 'evenY' : 'oddY'));
+                    tmpSquareNotation = $('<div></div>').
+                        css({
+                            position:    'absolute',
+                            bottom:      0,
+                            left:        0,
+                            fontSize:    '56%'
+                        }).
+                        addClass('squareNotation').
+                        html($settings.xLiteral[$settings.x[x] - 1] +
+                            '' + $settings.y[y]);
+                    // The following line add notation to the squares.
+                    // This is not real chess board styles.
+                    //tmpSquare.append(tmpSquareNotation);
+
+                    $boardInner.append(tmpSquare);
+                }
+            }
+        }
+
+        /**
+         * Build position, including the start position.
+         *
+         * @param start    - whether start from initial position
+         * @param type     - a string defining 'string' or 'fen'
+         * @param position - the position string
+         *
+         */
+        this.buildPosition = function(start, type, position) {
+            if (start) {
+                initializePosition();
+            }
+
+            arrangeMatrixPosition(type, position);
+
+            // Make pieces draggable.
+            $boardInner.find('.draggablePiece').draggable({
+                //grid: [ $settings.squareSize,$settings.squareSize ],
+                revert: 'invalid',
+                stack:  $boardInner.find('.draggablePiece'),
+                start:  function (event, ui){
+                    $(this).css({position : 'absolute'});
+                    highlightCandidateSquares($(this));
+                }
+            });
+
+            // Make pieces droppable.
+            $boardInner.find('.square').droppable({
+                accept:     '.draggablePiece',
+                tolerance:  'intersect',
+                drop:       function(event, ui) {
+                    //$( this ).addClass( "ui-state-highlight" );
+                    $(this).append(ui.draggable.css('position', 'static'));
+                    //console.log('drop');
+                }
+            });
+        }
+
+        /**
+         *
+         */
+        this.drawBoard = function() {
+            // @TODO: Append to element.
+            $board.append($boardInner);
+            $board.appendTo($settings.appendTo);
         }
 
         this.init = function(options, elem) {
@@ -205,96 +306,6 @@
             this.buildBoard();
             this.buildPosition(false, $settings.type, $settings.position);
             this.drawBoard();
-        }
-
-        this.buildBoard = function() {
-            var tmpSquare;
-            var tmpSquareNotation;
-
-            // @TODO - Reverse pieces here.
-            $settings.newY = $settings.y.slice();
-            $settings.newY.reverse();
-
-            for (x in $settings.x) {
-                for (y in $settings.newY) {
-                   tmpSquare = $('<div></div>').
-                       attr({id: 'pos' + $settings.x[x] +
-                           '' + $settings.y[y]}).
-                       css({
-                           left: (($settings.x[x] - 1) *
-                               $settings.squareSize),
-                               top:         (($settings.newY[y] - 1) *
-                                                $settings.squareSize),
-                               position:    'absolute',
-                               width:       $settings.squareSize,
-                               height:      $settings.squareSize
-                               })
-                           .addClass('square ' + (x % 2 ? 'evenX' : 'oddX') +
-                           ' ' + (y % 2 ? 'evenY' : 'oddY'));
-                   tmpSquareNotation = $('<div></div>').
-                       css({
-                           position:    'absolute',
-                           bottom:      0,
-                           left:        0,
-                           fontSize:    '56%'
-                       }).
-                       addClass('squareNotation').
-                       html($settings.xLiteral[$settings.x[x] - 1] +
-                           '' + $settings.y[y]);
-                   // The following line add notation to the squares.
-                   // This is not real chess board styles.
-                   //tmpSquare.append(tmpSquareNotation);
-
-                   $boardInner.append(tmpSquare);
-                }
-            }
-        }
-
-        /**
-         * Build position, including the start position.
-         *
-         * @param start    - whether start from initial position
-         * @param type     - a string defining 'string' or 'fen'
-         * @param position - the position string
-         *
-         */
-        this.buildPosition = function(start, type, position) {
-            if (start) {
-                initializePosition();
-            }
-
-            arrangeMatrixPosition(type, position);
-
-            // Make pieces draggable.
-            $boardInner.find('.draggablePiece').draggable({
-                //grid: [ $settings.squareSize,$settings.squareSize ],
-                revert: 'invalid',
-                stack:  $boardInner.find('.draggablePiece'),
-                start:  function (event, ui){
-                            $(this).css({position : 'absolute'});
-                            highlightCandidateSquares($(this));
-                        }
-            });
-
-            // Make pieces droppable.
-            $boardInner.find('.square').droppable({
-                accept:     '.draggablePiece',
-                tolerance:  'intersect',
-                drop:       function(event, ui) {
-                    //$( this ).addClass( "ui-state-highlight" );
-                    $(this).append(ui.draggable.css('position', 'static'));
-                    //console.log('drop');
-                }
-            });
-        }
-
-        /**
-         *
-         */
-        this.drawBoard = function() {
-            // @TODO: Append to element.
-            $board.append($boardInner);
-            $board.appendTo($settings.appendTo);
         }
     }
 
